@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "define.h"
 #include "Blob.h"
 
 
@@ -30,6 +31,12 @@ Blob& Blob::operator = (Blob& blob_)
 	return *this;
 }
 
+float& Blob::operator[](int n)
+{
+	assert(n < GetCount() && n >= 0);
+	float& ref = buffer_[n];
+	return ref;
+}
 
 Blob::~Blob()
 {
@@ -129,10 +136,10 @@ void Blob::Print()
 		return;
 	for (int n = 0; n < blob_shape[0]; n++)
 	{
-		printf("\n axis = batch %d\n", n);
+		printf("\n /*axis = batch %d*/\n", n);
 		for (int c = 0; c < blob_shape[1]; c++)
 		{
-			printf("\n axis = channel %d\n", c);
+			printf("\n /*axis = channel %d*/\n", c);
 			for (int h = 0; h < blob_shape[2]; h++)
 			{
 				for (int w = 0; w < blob_shape[3]; w++)
@@ -145,13 +152,13 @@ void Blob::Print()
 	}
 }
 
-void Blob::Create(vector<int> shape)
+void Blob::Create(vector<int> shape, float value)
 {
 	assert(shape.size() == 4);
 	Create(shape[0], shape[1], shape[2], shape[3]);
 }
 
-void Blob::Create(int n, int c, int h, int w)
+void Blob::Create(int n, int c, int h, int w, float value)
 {
 	assert(n > 0 && c > 0 && h > 0 && w > 0);
 	shape_[0] = n;
@@ -164,7 +171,53 @@ void Blob::Create(int n, int c, int h, int w)
 		delete[] buffer_;
 	}
 	buffer_ = new float[count];
-	memset(buffer_, 0, sizeof(float) * count);
+	if (value == 0)
+	{
+		memset(buffer_, value, sizeof(float) * count);
+	}
+	else
+	{
+		for (int i = 0; i < count; i++)
+		{
+			buffer_[i] = value;
+		}
+	}
+	
+}
+
+void Blob::Transpose()
+{
+	float* new_buffer = new float[GetCount()];
+	memset(new_buffer, 0, sizeof(float) * GetCount());
+	vector<int> new_shape(4, 0);
+	new_shape[0] = shape_[0];
+	new_shape[1] = shape_[1];
+	new_shape[2] = shape_[3];
+	new_shape[3] = shape_[2];
+	int channel_size = shape_[2] * shape_[3];
+	int batch_size = shape_[1] * channel_size;
+	int src_h = shape_[2];
+	int src_w = shape_[3];
+	int dst_h = src_w;
+	int dst_w = src_h;
+	for (int n = 0; n < GetBatch(); n++)
+	{
+		for (int c = 0; c < GetChannel(); c++)
+		{
+			for (int i = 0; i < new_shape[2]; i++)
+			{
+				for (int j = 0; j < new_shape[3]; j++)
+				{
+					int src_idx = n * batch_size + c * channel_size + j * src_w + i;
+					int dst_idx = n * batch_size + c * channel_size + i * dst_w + j;
+					new_buffer[dst_idx] = buffer_[src_idx];
+				}
+			}
+		}
+	}
+	delete[] buffer_;
+	buffer_ = new_buffer;
+	shape_ = new_shape;
 }
 
 int Blob::GetBatch()
@@ -186,6 +239,7 @@ int Blob::GetWidth()
 {
 	return shape_[3];
 }
+
 
 }
 

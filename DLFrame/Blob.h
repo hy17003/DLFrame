@@ -17,23 +17,26 @@ public:
 	Blob(Blob& blob_);
 	//ÖØÔØ=ºÅ²Ù×÷·û
 	Blob& operator =(Blob& blob_);
+	//ÖØÔØ[]ºÅ²Ù×÷·û
+	float& operator[](int n);
 	~Blob();
 	vector<int> GetShape();
+	int GetCount();
 	int GetBatch();
 	int GetChannel();
 	int GetHeight();
 	int GetWidth();
-	void Create(vector<int> shape);
-	void Create(int n, int c, int h, int w);
+	void Create(vector<int> shape, float value = 0);
+	void Create(int n, int c, int h, int w, float value = 0);
 	float GetElement(int n, int c, int h, int w);
 	void SetElement(float data, int n, int c, int h, int w);
 	float* GetBuffer();
-	int GetCount();
 	void Reshape(int n, int c, int h, int w);
 	void Reshape(vector<int> shape);
 	void SetBlob(float* data, int n, int c, int h, int w);
 	void SetBlob(float* data, vector<int> shape);
 	void Print();
+	void Transpose();
 private:
 	vector<int> shape_;
 	float* buffer_;
